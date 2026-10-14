@@ -1,0 +1,400 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dining Philosophers Semaphore Simulation</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    padding: 20px;
+    font-family: Arial, sans-serif;
+    background: #f5f8fc;
+    text-align: center;
+}
+
+h1 {
+    color: #234caa;
+}
+
+p {
+    color: #333;
+}
+
+#table {
+    position: relative;
+    width: 600px;
+    height: 600px;
+    max-width: 95vw;
+    max-height: 95vw;
+    margin: 25px auto;
+    background: #ffffff;
+    border: 8px solid #94c4ff;
+    border-radius: 50%;
+}
+
+.controller {
+    position: absolute;
+    width: 48%;
+    height: 48%;
+    left: 26%;
+    top: 26%;
+    border: 3px solid #94c4ff;
+    border-radius: 50%;
+    background: #dbeafe;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #234caa;
+    font-size: 22px;
+    font-weight: bold;
+    padding: 15px;
+}
+
+.philosopher {
+    position: absolute;
+    width: 145px;
+    height: 100px;
+    background: #dbeafe;
+    border: 3px solid #60a5fa;
+    border-radius: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    font-size: 15px;
+}
+
+.philosopher span {
+    font-weight: normal;
+}
+
+.thinking {
+    background: #dbeafe;
+}
+
+.waiting {
+    background: #ffedc2;
+    border-color: #d99b24;
+}
+
+.eating {
+    background: #c9f7d5;
+    border-color: #39a75a;
+}
+
+#p1 {
+    top: -45px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+#p2 {
+    top: 50%;
+    right: -65px;
+    transform: translateY(-50%);
+}
+
+#p3 {
+    bottom: -45px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+#p4 {
+    top: 50%;
+    left: -65px;
+    transform: translateY(-50%);
+}
+
+.chopstick {
+    position: absolute;
+    width: 65px;
+    height: 17px;
+    border: 2px solid #334155;
+    border-radius: 12px;
+    background: #aab9cc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.chopstick span {
+    position: absolute;
+    top: -30px;
+    background: white;
+    padding: 4px 8px;
+    border-radius: 5px;
+    font-weight: bold;
+}
+
+.used {
+    background: #ef9999;
+    border-color: #b91c1c;
+}
+
+#c1 {
+    top: 18%;
+    right: 17%;
+    transform: rotate(45deg);
+}
+
+#c2 {
+    bottom: 18%;
+    right: 17%;
+    transform: rotate(-60deg);
+}
+
+#c3 {
+    bottom: 18%;
+    left: 17%;
+    transform: rotate(60deg);
+}
+
+#c4 {
+    top: 18%;
+    left: 17%;
+    transform: rotate(-45deg);
+}
+
+.controls {
+    margin: 20px;
+}
+
+button {
+    padding: 11px 18px;
+    margin: 5px;
+    border: none;
+    border-radius: 7px;
+    background: #315fbd;
+    color: white;
+    font-size: 15px;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #23458a;
+}
+
+#status, #log {
+    max-width: 600px;
+    margin: 15px auto;
+    padding: 15px;
+    background: white;
+    border: 1px solid #d6e0ec;
+    border-radius: 10px;
+    text-align: left;
+}
+
+#log {
+    max-height: 180px;
+    overflow-y: auto;
+}
+
+@media (max-width: 550px) {
+    #table {
+        width: 90vw;
+        height: 90vw;
+    }
+
+    .philosopher {
+        width: 105px;
+        height: 75px;
+        font-size: 12px;
+    }
+
+    #p2 { right: -35px; }
+    #p4 { left: -35px; }
+
+    .controller {
+        font-size: 16px;
+    }
+
+    .chopstick {
+        width: 48px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<h1>Dining Philosophers Problem</h1>
+<p>Semaphore Synchronization with 4 Philosophers and 4 Chopsticks</p>
+
+<div id="table">
+
+    <div class="controller">
+        Semaphore<br>Controller
+    </div>
+
+    <div class="philosopher thinking" id="p1">
+        <strong>Philosopher 1</strong>
+        <span>Thinking</span>
+    </div>
+
+    <div class="philosopher thinking" id="p2">
+        <strong>Philosopher 2</strong>
+        <span>Thinking</span>
+    </div>
+
+    <div class="philosopher thinking" id="p3">
+        <strong>Philosopher 3</strong>
+        <span>Thinking</span>
+    </div>
+
+    <div class="philosopher thinking" id="p4">
+        <strong>Philosopher 4</strong>
+        <span>Thinking</span>
+    </div>
+
+    <div class="chopstick" id="c1"><span>C1</span></div>
+    <div class="chopstick" id="c2"><span>C2</span></div>
+    <div class="chopstick" id="c3"><span>C3</span></div>
+    <div class="chopstick" id="c4"><span>C4</span></div>
+
+</div>
+
+<div class="controls">
+    <button onclick="play()">Play</button>
+    <button onclick="pause()">Pause</button>
+    <button onclick="nextEvent()">Next Event</button>
+    <button onclick="reset()">Reset</button>
+</div>
+
+<div id="status">
+    <strong>Current Event:</strong>
+    <p id="message">Press Play to start the simulation.</p>
+    <strong>Semaphore Status:</strong>
+    <span id="semaphore">Available</span>
+    <p>Event: <span id="count">0</span> / 12</p>
+</div>
+
+<div id="log">
+    <strong>Event Log</strong>
+    <ol id="eventLog"></ol>
+</div>
+
+<script>
+const events = [
+    {p: 1, action: "eating", text: "Philosopher 1 picks up C1 and C4 and starts eating."},
+    {p: 3, action: "eating", text: "Philosopher 3 picks up C2 and C3 and starts eating."},
+    {p: 2, action: "waiting", text: "Philosopher 2 waits for available chopsticks."},
+    {p: 4, action: "waiting", text: "Philosopher 4 waits for available chopsticks."},
+    {p: 1, action: "thinking", text: "Philosopher 1 finishes eating and releases C1 and C4."},
+    {p: 3, action: "thinking", text: "Philosopher 3 finishes eating and releases C2 and C3."},
+    {p: 2, action: "eating", text: "Philosopher 2 picks up C1 and C2 and starts eating."},
+    {p: 4, action: "eating", text: "Philosopher 4 picks up C3 and C4 and starts eating."},
+    {p: 2, action: "thinking", text: "Philosopher 2 releases C1 and C2."},
+    {p: 4, action: "thinking", text: "Philosopher 4 releases C3 and C4."},
+    {p: 1, action: "eating", text: "Philosopher 1 starts eating again."},
+    {p: 1, action: "thinking", text: "Philosopher 1 finishes eating and releases both chopsticks."}
+];
+
+let index = 0;
+let timer = null;
+
+function render() {
+    for (let i = 1; i <= 4; i++) {
+        const philosopher = document.getElementById("p" + i);
+        philosopher.className = "philosopher thinking";
+        philosopher.querySelector("span").textContent = "Thinking";
+    }
+
+    for (let i = 1; i <= 4; i++) {
+        document.getElementById("c" + i).classList.remove("used");
+    }
+
+    const log = document.getElementById("eventLog");
+    log.innerHTML = "";
+
+    for (let i = 0; i < index; i++) {
+        const item = document.createElement("li");
+        item.textContent = events[i].text;
+        log.appendChild(item);
+    }
+
+    document.getElementById("count").textContent = index;
+
+    if (index === 0) {
+        document.getElementById("message").textContent =
+            "Press Play or Next Event to start the simulation.";
+        document.getElementById("semaphore").textContent = "Available";
+        return;
+    }
+
+    const event = events[index - 1];
+    const p = event.p;
+    const philosopher = document.getElementById("p" + p);
+
+    document.getElementById("message").textContent = event.text;
+
+    if (event.action === "eating") {
+        philosopher.className = "philosopher eating";
+        philosopher.querySelector("span").textContent = "Eating";
+
+        const left = p;
+        const right = p === 4 ? 1 : p + 1;
+
+        document.getElementById("c" + left).classList.add("used");
+        document.getElementById("c" + right).classList.add("used");
+
+        document.getElementById("semaphore").textContent =
+            "Chopsticks acquired";
+    } else if (event.action === "waiting") {
+        philosopher.className = "philosopher waiting";
+        philosopher.querySelector("span").textContent = "Waiting";
+        document.getElementById("semaphore").textContent =
+            "Waiting for chopsticks";
+    } else {
+        document.getElementById("semaphore").textContent =
+            "Chopsticks released";
+    }
+}
+
+function nextEvent() {
+    pause();
+    if (index < events.length) {
+        index++;
+        render();
+    }
+}
+
+function play() {
+    if (timer !== null) return;
+
+    timer = setInterval(function() {
+        if (index < events.length) {
+            index++;
+            render();
+        } else {
+            pause();
+        }
+    }, 1500);
+}
+
+function pause() {
+    if (timer !== null) {
+        clearInterval(timer);
+        timer = null;
+    }
+}
+
+function reset() {
+    pause();
+    index = 0;
+    render();
+}
+
+render();
+</script>
+
+</body>
+</html>

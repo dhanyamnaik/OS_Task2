@@ -1,0 +1,638 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dining Philosophers Monitor Simulation</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    padding: 20px;
+    font-family: Arial, sans-serif;
+    color: #1e293b;
+    background: #f1f5f9;
+}
+
+.container {
+    max-width: 950px;
+    margin: auto;
+    padding: 24px;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 15px #cbd5e1;
+}
+
+h1 {
+    text-align: center;
+    color: #7c3aed;
+}
+
+.subtitle {
+    text-align: center;
+    color: #64748b;
+}
+
+.section {
+    margin-top: 22px;
+    padding: 18px;
+    background: #f8fafc;
+    border-radius: 12px;
+}
+
+.table-area {
+    position: relative;
+    width: 100%;
+    max-width: 570px;
+    height: 400px;
+    margin: 10px auto;
+}
+
+.table-circle {
+    position: absolute;
+    width: 250px;
+    height: 250px;
+    border-radius: 50%;
+    background: #ddd6fe;
+    border: 8px solid #a78bfa;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: #4c1d95;
+    font-weight: bold;
+    font-size: 20px;
+}
+
+.philosopher {
+    position: absolute;
+    z-index: 2;
+    width: 115px;
+    min-height: 85px;
+    border: 3px solid #60a5fa;
+    border-radius: 14px;
+    background: #dbeafe;
+    text-align: center;
+    padding: 8px 4px;
+    transition: background .3s, border-color .3s;
+}
+
+.philosopher .name {
+    font-weight: bold;
+    font-size: 13px;
+    margin-top: 3px;
+}
+
+.philosopher .status {
+    font-size: 12px;
+    margin-top: 6px;
+}
+
+.philosopher.thinking {
+    background: #dbeafe;
+    border-color: #60a5fa;
+}
+
+.philosopher.waiting {
+    background: #fef3c7;
+    border-color: #f59e0b;
+}
+
+.philosopher.eating {
+    background: #bbf7d0;
+    border-color: #16a34a;
+}
+
+#P1 {
+    left: 50%;
+    top: 0;
+    transform: translateX(-50%);
+}
+
+#P2 {
+    right: 0;
+    top: 110px;
+}
+
+#P3 {
+    left: 50%;
+    bottom: 0;
+    transform: translateX(-50%);
+}
+
+#P4 {
+    left: 0;
+    top: 110px;
+}
+
+.chopstick {
+    position: absolute;
+    z-index: 3;
+    width: 12px;
+    height: 48px;
+    border-radius: 8px;
+    background: #94a3b8;
+    border: 2px solid #334155;
+    transition: background .3s;
+}
+
+.chopstick.used {
+    background: #ef4444;
+}
+
+#C1 {
+    left: 69%;
+    top: 25%;
+    transform: rotate(-45deg);
+}
+
+#C2 {
+    left: 69%;
+    top: 65%;
+    transform: rotate(45deg);
+}
+
+#C3 {
+    left: 29%;
+    top: 65%;
+    transform: rotate(-45deg);
+}
+
+#C4 {
+    left: 29%;
+    top: 25%;
+    transform: rotate(45deg);
+}
+
+.chopstick-label {
+    position: absolute;
+    z-index: 4;
+    font-size: 12px;
+    font-weight: bold;
+    background: white;
+    padding: 3px 5px;
+    border-radius: 5px;
+}
+
+#L1 {
+    left: 72%;
+    top: 22%;
+}
+
+#L2 {
+    left: 72%;
+    top: 73%;
+}
+
+#L3 {
+    left: 23%;
+    top: 73%;
+}
+
+#L4 {
+    left: 23%;
+    top: 22%;
+}
+
+.monitor-box {
+    padding: 16px;
+    border: 2px solid #c4b5fd;
+    background: #f5f3ff;
+    border-radius: 10px;
+    text-align: center;
+    line-height: 1.8;
+}
+
+.legend {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    font-size: 13px;
+}
+
+.legend span {
+    padding: 8px 10px;
+    border-radius: 7px;
+    background: #e2e8f0;
+}
+
+#message {
+    min-height: 45px;
+    text-align: center;
+    font-weight: bold;
+    font-size: 16px;
+    line-height: 1.5;
+}
+
+#progress {
+    text-align: center;
+    color: #64748b;
+}
+
+.buttons {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 20px 0;
+}
+
+button {
+    border: none;
+    padding: 12px 18px;
+    border-radius: 8px;
+    background: #7c3aed;
+    color: white;
+    cursor: pointer;
+    font-size: 15px;
+}
+
+button:hover {
+    background: #6d28d9;
+}
+
+#log {
+    max-height: 250px;
+    overflow-y: auto;
+    padding: 15px 30px;
+    background: #1e1b4b;
+    color: #ede9fe;
+    border-radius: 8px;
+    line-height: 1.8;
+}
+
+#log li.current {
+    color: #86efac;
+    font-weight: bold;
+}
+
+.note {
+    font-size: 13px;
+    color: #64748b;
+    text-align: center;
+}
+
+@media (max-width: 600px) {
+    body {
+        padding: 8px;
+    }
+
+    .container {
+        padding: 12px;
+    }
+
+    .table-area {
+        transform: scale(.78);
+        transform-origin: top center;
+        margin-bottom: -70px;
+        width: 570px;
+        left: 50%;
+        margin-left: -285px;
+    }
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+
+<h1>Dining Philosophers Problem</h1>
+<p class="subtitle">Monitor Synchronization - Visual Simulation</p>
+
+<div class="section">
+    <h2>Philosophers and Chopsticks</h2>
+
+    <div class="table-area">
+
+        <div class="table-circle">Monitor</div>
+
+        <div class="philosopher thinking" id="P1">
+            <div class="name">Philosopher 1</div>
+            <div class="status">Thinking</div>
+        </div>
+
+        <div class="philosopher thinking" id="P2">
+            <div class="name">Philosopher 2</div>
+            <div class="status">Thinking</div>
+        </div>
+
+        <div class="philosopher thinking" id="P3">
+            <div class="name">Philosopher 3</div>
+            <div class="status">Thinking</div>
+        </div>
+
+        <div class="philosopher thinking" id="P4">
+            <div class="name">Philosopher 4</div>
+            <div class="status">Thinking</div>
+        </div>
+
+        <div class="chopstick" id="C1"></div>
+        <div class="chopstick" id="C2"></div>
+        <div class="chopstick" id="C3"></div>
+        <div class="chopstick" id="C4"></div>
+
+        <div class="chopstick-label" id="L1">C1</div>
+        <div class="chopstick-label" id="L2">C2</div>
+        <div class="chopstick-label" id="L3">C3</div>
+        <div class="chopstick-label" id="L4">C4</div>
+
+    </div>
+
+    <div class="legend">
+        <span>Blue: Thinking</span>
+        <span>Yellow: Waiting</span>
+        <span>Green: Eating</span>
+        <span>Red: Chopstick in use</span>
+        <span>Grey: Chopstick free</span>
+    </div>
+</div>
+
+<div class="section">
+    <h2>Monitor Controller</h2>
+
+    <div class="monitor-box">
+        <b>Monitor rule:</b>
+        A philosopher can eat only when both neighboring chopsticks are available.
+        <br>
+
+        <b>Current status:</b>
+        <span id="monitorStatus">All philosophers are thinking.</span>
+        <br>
+
+        <b>Waiting queue:</b>
+        <span id="waitingQueue">Empty</span>
+    </div>
+</div>
+
+<div class="section">
+    <h2>Current Event</h2>
+    <p id="message">Press Play or Next Event to start.</p>
+    <p id="progress">Event 0 of 16</p>
+</div>
+
+<div class="buttons">
+    <button id="play">Play</button>
+    <button id="pause">Pause</button>
+    <button id="next">Next Event</button>
+    <button id="reset">Reset</button>
+</div>
+
+<div class="section">
+    <h2>Event Timeline</h2>
+    <ol id="log"></ol>
+</div>
+
+<p class="note">
+    Educational demonstration of monitor-based synchronization.
+</p>
+
+</div>
+
+<script>
+const events = [
+    {
+        p: 1,
+        action: "waiting",
+        msg: "Philosopher 1 requests permission from the monitor."
+    },
+    {
+        p: 1,
+        action: "eating",
+        msg: "The monitor allows Philosopher 1 to eat."
+    },
+    {
+        p: 3,
+        action: "waiting",
+        msg: "Philosopher 3 requests permission from the monitor."
+    },
+    {
+        p: 3,
+        action: "eating",
+        msg: "The monitor allows Philosopher 3 to eat. P1 and P3 can eat together."
+    },
+    {
+        p: 2,
+        action: "waiting",
+        msg: "Philosopher 2 waits because a neighboring chopstick is in use."
+    },
+    {
+        p: 4,
+        action: "waiting",
+        msg: "Philosopher 4 waits because a neighboring chopstick is in use."
+    },
+    {
+        p: 1,
+        action: "thinking",
+        msg: "Philosopher 1 finishes eating and releases both chopsticks."
+    },
+    {
+        p: 3,
+        action: "thinking",
+        msg: "Philosopher 3 finishes eating and releases both chopsticks."
+    },
+    {
+        p: 2,
+        action: "eating",
+        msg: "The monitor allows Philosopher 2 to eat."
+    },
+    {
+        p: 4,
+        action: "eating",
+        msg: "The monitor allows Philosopher 4 to eat."
+    },
+    {
+        p: 2,
+        action: "thinking",
+        msg: "Philosopher 2 finishes eating and releases both chopsticks."
+    },
+    {
+        p: 4,
+        action: "thinking",
+        msg: "Philosopher 4 finishes eating and releases both chopsticks."
+    },
+    {
+        p: 1,
+        action: "waiting",
+        msg: "Philosopher 1 requests permission to eat again."
+    },
+    {
+        p: 1,
+        action: "eating",
+        msg: "The monitor allows Philosopher 1 to eat again."
+    },
+    {
+        p: 1,
+        action: "thinking",
+        msg: "Philosopher 1 finishes eating and releases both chopsticks."
+    },
+    {
+        p: 3,
+        action: "waiting",
+        msg: "Philosopher 3 requests permission to eat again."
+    },
+    {
+        p: 3,
+        action: "eating",
+        msg: "The monitor allows Philosopher 3 to eat again."
+    },
+    {
+        p: 3,
+        action: "thinking",
+        msg: "Philosopher 3 finishes. The demonstration is complete."
+    }
+];
+
+let index = 0;
+let timer = null;
+
+function stopPlay() {
+    if (timer !== null) {
+        clearInterval(timer);
+        timer = null;
+    }
+}
+
+function render() {
+    const states = [
+        "",
+        "thinking",
+        "thinking",
+        "thinking",
+        "thinking"
+    ];
+
+    for (let i = 0; i < index; i++) {
+        states[events[i].p] = events[i].action;
+    }
+
+    const usedSticks = new Set();
+
+    // P1 uses C1 and C4.
+    // P2 uses C1 and C2.
+    // P3 uses C2 and C3.
+    // P4 uses C3 and C4.
+    for (let p = 1; p <= 4; p++) {
+        if (states[p] === "eating") {
+            const rightStick = p;
+            const leftStick = p === 1 ? 4 : p - 1;
+
+            usedSticks.add(leftStick);
+            usedSticks.add(rightStick);
+        }
+    }
+
+    for (let p = 1; p <= 4; p++) {
+        const card = document.getElementById("P" + p);
+        const state = states[p];
+
+        card.className = "philosopher " + state;
+        card.querySelector(".status").textContent =
+            state.charAt(0).toUpperCase() + state.slice(1);
+    }
+
+    for (let s = 1; s <= 4; s++) {
+        document.getElementById("C" + s).className =
+            "chopstick " + (usedSticks.has(s) ? "used" : "");
+    }
+
+    const queue = [];
+    const eating = [];
+
+    for (let p = 1; p <= 4; p++) {
+        if (states[p] === "waiting") {
+            queue.push("P" + p);
+        }
+
+        if (states[p] === "eating") {
+            eating.push("P" + p);
+        }
+    }
+
+    document.getElementById("monitorStatus").textContent =
+        eating.length > 0
+        ? eating.join(", ") + " eating; " +
+          (4 - usedSticks.size) + " chopstick(s) free."
+        : "No philosopher is eating; all chopsticks are free.";
+
+    document.getElementById("waitingQueue").textContent =
+        queue.length > 0 ? queue.join(", ") : "Empty";
+
+    document.getElementById("progress").textContent =
+        "Event " + index + " of " + events.length;
+
+    document.getElementById("message").textContent =
+        index === 0
+        ? "Ready. Press Play or Next Event."
+        : events[index - 1].msg;
+
+    const log = document.getElementById("log");
+    log.innerHTML = "";
+
+    events.forEach((event, i) => {
+        const li = document.createElement("li");
+        li.textContent = "Event " + (i + 1) + ": " + event.msg;
+
+        if (i === index - 1) {
+            li.className = "current";
+        }
+
+        log.appendChild(li);
+    });
+
+    if (index > 0) {
+        log.children[index - 1].scrollIntoView({
+            block: "nearest"
+        });
+    }
+}
+
+function nextEvent() {
+    if (index < events.length) {
+        index++;
+        render();
+    }
+
+    if (index >= events.length) {
+        stopPlay();
+    }
+}
+
+document.getElementById("play").addEventListener("click", () => {
+    if (timer !== null || index >= events.length) {
+        return;
+    }
+
+    nextEvent();
+
+    if (index < events.length) {
+        timer = setInterval(nextEvent, 1800);
+    }
+});
+
+document.getElementById("pause").addEventListener("click", stopPlay);
+
+document.getElementById("next").addEventListener("click", () => {
+    stopPlay();
+    nextEvent();
+});
+
+document.getElementById("reset").addEventListener("click", () => {
+    stopPlay();
+    index = 0;
+    render();
+});
+
+render();
+</script>
+
+</body>
+</html>

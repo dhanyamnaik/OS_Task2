@@ -1,0 +1,295 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Readers-Writers Semaphore Simulation</title>
+<style>
+body {
+    font-family: Arial, sans-serif;
+    background: #f1f5f9;
+    margin: 0;
+    padding: 25px;
+    color: #1e293b;
+}
+.container {
+    max-width: 1000px;
+    margin: auto;
+    background: white;
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0 4px 15px #cbd5e1;
+}
+h1 { text-align: center; color: #1d4ed8; }
+.description { text-align: center; color: #64748b; }
+.section {
+    margin-top: 25px;
+    padding: 18px;
+    background: #f8fafc;
+    border-radius: 12px;
+}
+.people {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 15px;
+}
+.person {
+    flex: 1;
+    min-width: 130px;
+    padding: 20px 10px;
+    text-align: center;
+    border: 2px solid #cbd5e1;
+    border-radius: 10px;
+    background: #e2e8f0;
+    transition: 0.3s;
+}
+.person.active {
+    background: #bbf7d0;
+    border-color: #16a34a;
+}
+.person.waiting {
+    background: #fef3c7;
+    border-color: #d97706;
+}
+.person.writing {
+    background: #fecaca;
+    border-color: #dc2626;
+}
+.person.done {
+    background: #dbeafe;
+    border-color: #2563eb;
+}
+.status { font-size: 14px; margin-top: 10px; }
+.resource {
+    text-align: center;
+    padding: 25px;
+    border: 3px dashed #94a3b8;
+    border-radius: 12px;
+    margin-top: 15px;
+    background: #f8fafc;
+    font-size: 20px;
+    font-weight: bold;
+}
+.resource.reading {
+    background: #dcfce7;
+    border-color: #16a34a;
+}
+.resource.writing {
+    background: #fee2e2;
+    border-color: #dc2626;
+}
+.buttons {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    margin: 20px 0;
+}
+button {
+    padding: 12px 20px;
+    border: none;
+    border-radius: 8px;
+    background: #2563eb;
+    color: white;
+    font-size: 15px;
+    cursor: pointer;
+}
+button:hover { background: #1d4ed8; }
+#message {
+    text-align: center;
+    font-weight: bold;
+    font-size: 17px;
+    min-height: 28px;
+}
+#progress { text-align: center; color: #64748b; }
+#log {
+    max-height: 220px;
+    overflow-y: auto;
+    background: #0f172a;
+    color: #e2e8f0;
+    padding: 15px 30px;
+    border-radius: 8px;
+    line-height: 1.8;
+}
+#log li.current { color: #86efac; font-weight: bold; }
+.note { color: #64748b; font-size: 13px; text-align: center; }
+</style>
+</head>
+<body>
+<div class="container">
+<h1>Readers-Writers Problem</h1>
+<p class="description">Semaphore Synchronization — Visual Simulation</p>
+
+<div class="section">
+<h2>Readers</h2>
+<p>Multiple readers can read the shared resource at the same time.</p>
+<div class="people">
+<div class="person" id="R1">📖 Reader 1<div class="status">Not started</div></div>
+<div class="person" id="R2">📖 Reader 2<div class="status">Not started</div></div>
+<div class="person" id="R3">📖 Reader 3<div class="status">Not started</div></div>
+</div>
+</div>
+
+<div class="section">
+<h2>Shared Resource</h2>
+<div class="resource" id="resource">🔒 Resource is free</div>
+<p id="message">Press Play to begin the simulation.</p>
+<p id="progress">Event 0 of 15</p>
+</div>
+
+<div class="section">
+<h2>Writers</h2>
+<p>Only one writer can write at a time. Writers need exclusive access.</p>
+<div class="people">
+<div class="person" id="W1">✍️ Writer 1<div class="status">Not started</div></div>
+<div class="person" id="W2">✍️ Writer 2<div class="status">Not started</div></div>
+</div>
+</div>
+
+<div class="buttons">
+<button id="play">▶ Play</button>
+<button id="pause">⏸ Pause</button>
+<button id="next">⏭ Next Event</button>
+<button id="reset">↻ Reset</button>
+</div>
+
+<div class="section">
+<h2>Event Timeline</h2>
+<ol id="log"></ol>
+</div>
+<p class="note">Educational demonstration of the Readers-Writers synchronization problem.</p>
+</div>
+
+<script>
+const events = [
+{who:"R1", action:"waiting", message:"Reader 1 wants to read."},
+{who:"R1", action:"reading", message:"Reader 1 enters the reading section. Active readers = 1."},
+{who:"R2", action:"waiting", message:"Reader 2 wants to read."},
+{who:"R2", action:"reading", message:"Reader 2 enters the reading section. Active readers = 2."},
+{who:"W1", action:"waiting", message:"Writer 1 wants to write and waits for readers to finish."},
+{who:"R3", action:"waiting", message:"Reader 3 wants to read."},
+{who:"R3", action:"reading", message:"Reader 3 enters the reading section. Active readers = 3."},
+{who:"W2", action:"waiting", message:"Writer 2 wants to write and waits."},
+{who:"R1", action:"done", message:"Reader 1 leaves. Active readers = 2."},
+{who:"R2", action:"done", message:"Reader 2 leaves. Active readers = 1."},
+{who:"R3", action:"done", message:"Reader 3 leaves. Active readers = 0. Resource becomes free."},
+{who:"W1", action:"writing", message:"Writer 1 enters the writing section with exclusive access."},
+{who:"W1", action:"done", message:"Writer 1 finishes writing. Resource becomes free."},
+{who:"W2", action:"writing", message:"Writer 2 enters the writing section with exclusive access."},
+{who:"W2", action:"done", message:"Writer 2 finishes writing. Simulation complete."}
+];
+
+let index = 0;
+let timer = null;
+
+function stopPlay() {
+    if (timer !== null) {
+        clearInterval(timer);
+        timer = null;
+    }
+}
+
+function updatePerson(id, state, text) {
+    const el = document.getElementById(id);
+    el.className = "person " + state;
+    el.querySelector(".status").textContent = text;
+}
+
+function render() {
+    ["R1","R2","R3","W1","W2"].forEach(id => {
+        updatePerson(id, "", "Not started");
+    });
+
+    let activeReaders = 0;
+    let writer = null;
+
+    for (let i = 0; i < index; i++) {
+        const e = events[i];
+        if (e.who.startsWith("R")) {
+            if (e.action === "reading") activeReaders++;
+            if (e.action === "done") activeReaders--;
+        }
+        if (e.who.startsWith("W") && e.action === "writing") writer = e.who;
+        if (e.who.startsWith("W") && e.action === "done" && writer === e.who) writer = null;
+    }
+
+    for (let i = 0; i < index; i++) {
+        const e = events[i];
+        if (e.action === "waiting") {
+            updatePerson(e.who, "waiting", "Waiting");
+        } else if (e.action === "reading") {
+            updatePerson(e.who, "active", "Reading");
+        } else if (e.action === "writing") {
+            updatePerson(e.who, "writing", "Writing");
+        } else if (e.action === "done") {
+            updatePerson(e.who, "done", "Finished");
+        }
+    }
+
+    const resource = document.getElementById("resource");
+    if (writer) {
+        resource.className = "resource writing";
+        resource.textContent = "✍️ " + writer + " is writing — exclusive access";
+    } else if (activeReaders > 0) {
+        resource.className = "resource reading";
+        resource.textContent = "📖 Readers are reading — " + activeReaders + " active";
+    } else {
+        resource.className = "resource";
+        resource.textContent = "🔒 Resource is free";
+    }
+
+    document.getElementById("progress").textContent =
+        "Event " + index + " of " + events.length;
+
+    const log = document.getElementById("log");
+    log.innerHTML = "";
+    events.forEach((e, i) => {
+        const li = document.createElement("li");
+        li.textContent = "Event " + (i + 1) + ": " + e.message;
+        if (i === index - 1) li.className = "current";
+        log.appendChild(li);
+    });
+
+    if (index === 0) {
+        document.getElementById("message").textContent =
+            "Ready! Press Play or Next Event.";
+    } else {
+        document.getElementById("message").textContent =
+            events[index - 1].message;
+    }
+    log.scrollTop = log.scrollHeight;
+}
+
+function nextEvent() {
+    if (index < events.length) {
+        index++;
+        render();
+    }
+    if (index >= events.length) stopPlay();
+}
+
+document.getElementById("play").addEventListener("click", () => {
+    if (timer !== null || index >= events.length) return;
+    nextEvent();
+    if (index < events.length) {
+        timer = setInterval(nextEvent, 1800);
+    }
+});
+
+document.getElementById("pause").addEventListener("click", stopPlay);
+document.getElementById("next").addEventListener("click", () => {
+    stopPlay();
+    nextEvent();
+});
+document.getElementById("reset").addEventListener("click", () => {
+    stopPlay();
+    index = 0;
+    render();
+});
+
+render();
+</script>
+</body>
+</html>

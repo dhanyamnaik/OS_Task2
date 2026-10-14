@@ -1,0 +1,417 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Readers-Writers Monitor Simulation</title>
+
+<style>
+body {
+    font-family: Arial, sans-serif;
+    background: #f1f5f9;
+    margin: 0;
+    padding: 25px;
+    color: #1e293b;
+}
+.container {
+    max-width: 1000px;
+    margin: auto;
+    background: white;
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0 4px 15px #cbd5e1;
+}
+h1 {
+    text-align: center;
+    color: #7c3aed;
+}
+.description {
+    text-align: center;
+    color: #64748b;
+}
+.section {
+    margin-top: 25px;
+    padding: 18px;
+    background: #f8fafc;
+    border-radius: 12px;
+}
+.people {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 15px;
+}
+.person {
+    flex: 1;
+    min-width: 130px;
+    padding: 20px 10px;
+    text-align: center;
+    border: 2px solid #cbd5e1;
+    border-radius: 10px;
+    background: #e2e8f0;
+    transition: 0.3s;
+}
+.person.active {
+    background: #bbf7d0;
+    border-color: #16a34a;
+}
+.person.waiting {
+    background: #fef3c7;
+    border-color: #d97706;
+}
+.person.writing {
+    background: #fecaca;
+    border-color: #dc2626;
+}
+.person.done {
+    background: #dbeafe;
+    border-color: #2563eb;
+}
+.status {
+    font-size: 14px;
+    margin-top: 10px;
+}
+.resource {
+    text-align: center;
+    padding: 25px;
+    border: 3px dashed #94a3b8;
+    border-radius: 12px;
+    margin-top: 15px;
+    background: #f8fafc;
+    font-size: 20px;
+    font-weight: bold;
+}
+.resource.reading {
+    background: #dcfce7;
+    border-color: #16a34a;
+}
+.resource.writing {
+    background: #fee2e2;
+    border-color: #dc2626;
+}
+.monitor {
+    background: #ede9fe;
+    border: 2px solid #a78bfa;
+    border-radius: 10px;
+    padding: 15px;
+    margin-top: 15px;
+    text-align: center;
+}
+.buttons {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    margin: 20px 0;
+}
+button {
+    padding: 12px 20px;
+    border: none;
+    border-radius: 8px;
+    background: #7c3aed;
+    color: white;
+    font-size: 15px;
+    cursor: pointer;
+}
+button:hover {
+    background: #6d28d9;
+}
+#message {
+    text-align: center;
+    font-weight: bold;
+    font-size: 17px;
+    min-height: 28px;
+}
+#progress {
+    text-align: center;
+    color: #64748b;
+}
+#log {
+    max-height: 250px;
+    overflow-y: auto;
+    background: #1e1b4b;
+    color: #ede9fe;
+    padding: 15px 30px;
+    border-radius: 8px;
+    line-height: 1.8;
+}
+#log li.current {
+    color: #86efac;
+    font-weight: bold;
+}
+.note {
+    color: #64748b;
+    font-size: 13px;
+    text-align: center;
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+
+<h1>Readers-Writers Problem</h1>
+<p class="description">Monitor Synchronization — Visual Simulation</p>
+
+<div class="section">
+<h2>Readers</h2>
+<p>Multiple readers can read the shared resource at the same time.</p>
+<div class="people">
+    <div class="person" id="R1">
+        📖 Reader 1
+        <div class="status">Not started</div>
+    </div>
+    <div class="person" id="R2">
+        📖 Reader 2
+        <div class="status">Not started</div>
+    </div>
+    <div class="person" id="R3">
+        📖 Reader 3
+        <div class="status">Not started</div>
+    </div>
+</div>
+</div>
+
+<div class="section">
+<h2>Monitor Controller</h2>
+<p>The monitor manages entry to the shared resource and makes readers or writers wait when access is not allowed.</p>
+<div class="monitor" id="monitor">
+    🛡️ Monitor: Ready
+    <div id="monitorStatus">No one is using the resource.</div>
+</div>
+</div>
+
+<div class="section">
+<h2>Shared Resource</h2>
+<div class="resource" id="resource">
+    🔒 Resource is free
+</div>
+<p id="message">Press Play or Next Event to begin.</p>
+<p id="progress">Event 0 of 15</p>
+</div>
+
+<div class="section">
+<h2>Writers</h2>
+<p>Only one writer can write at a time, with exclusive access.</p>
+<div class="people">
+    <div class="person" id="W1">
+        ✍️ Writer 1
+        <div class="status">Not started</div>
+    </div>
+    <div class="person" id="W2">
+        ✍️ Writer 2
+        <div class="status">Not started</div>
+    </div>
+</div>
+</div>
+
+<div class="buttons">
+    <button id="play">▶ Play</button>
+    <button id="pause">⏸ Pause</button>
+    <button id="next">⏭ Next Event</button>
+    <button id="reset">↻ Reset</button>
+</div>
+
+<div class="section">
+<h2>Event Timeline</h2>
+<ol id="log"></ol>
+</div>
+
+<p class="note">
+Educational demonstration of monitor-based synchronization.
+</p>
+
+</div>
+
+<script>
+const events = [
+    {who:"R1", action:"waiting",
+     message:"Reader 1 requests permission from the monitor."},
+
+    {who:"R1", action:"reading",
+     message:"Monitor allows Reader 1 to read."},
+
+    {who:"R2", action:"waiting",
+     message:"Reader 2 requests permission from the monitor."},
+
+    {who:"R2", action:"reading",
+     message:"Monitor allows Reader 2 to read alongside Reader 1."},
+
+    {who:"W1", action:"waiting",
+     message:"Writer 1 requests access and must wait while readers are active."},
+
+    {who:"R3", action:"waiting",
+     message:"Reader 3 requests permission from the monitor."},
+
+    {who:"R3", action:"reading",
+     message:"Monitor allows Reader 3 to read."},
+
+    {who:"W2", action:"waiting",
+     message:"Writer 2 requests access and waits for exclusive access."},
+
+    {who:"R1", action:"done",
+     message:"Reader 1 finishes reading. Two readers remain."},
+
+    {who:"R2", action:"done",
+     message:"Reader 2 finishes reading. One reader remains."},
+
+    {who:"R3", action:"done",
+     message:"Reader 3 finishes reading. The resource becomes free."},
+
+    {who:"W1", action:"writing",
+     message:"Monitor grants Writer 1 exclusive access to write."},
+
+    {who:"W1", action:"done",
+     message:"Writer 1 finishes writing and releases the resource."},
+
+    {who:"W2", action:"writing",
+     message:"Monitor grants Writer 2 exclusive access to write."},
+
+    {who:"W2", action:"done",
+     message:"Writer 2 finishes writing. Simulation complete."}
+];
+
+let index = 0;
+let timer = null;
+
+function stopPlay() {
+    if (timer !== null) {
+        clearInterval(timer);
+        timer = null;
+    }
+}
+
+function setPerson(id, state, status) {
+    const person = document.getElementById(id);
+    person.className = "person " + state;
+    person.querySelector(".status").textContent = status;
+}
+
+function render() {
+    ["R1", "R2", "R3", "W1", "W2"].forEach(id => {
+        setPerson(id, "", "Not started");
+    });
+
+    let activeReaders = 0;
+    let activeWriter = null;
+
+    for (let i = 0; i < index; i++) {
+        const event = events[i];
+
+        if (event.who.startsWith("R")) {
+            if (event.action === "reading") activeReaders++;
+            if (event.action === "done") activeReaders--;
+        }
+
+        if (event.who.startsWith("W")) {
+            if (event.action === "writing") activeWriter = event.who;
+            if (event.action === "done" &&
+                activeWriter === event.who) {
+                activeWriter = null;
+            }
+        }
+    }
+
+    for (let i = 0; i < index; i++) {
+        const event = events[i];
+
+        if (event.action === "waiting") {
+            setPerson(event.who, "waiting", "Waiting for access");
+        } else if (event.action === "reading") {
+            setPerson(event.who, "active", "Reading");
+        } else if (event.action === "writing") {
+            setPerson(event.who, "writing", "Writing");
+        } else if (event.action === "done") {
+            setPerson(event.who, "done", "Finished");
+        }
+    }
+
+    const resource = document.getElementById("resource");
+    const monitor = document.getElementById("monitor");
+    const monitorStatus = document.getElementById("monitorStatus");
+
+    if (activeWriter !== null) {
+        resource.className = "resource writing";
+        resource.textContent =
+            "✍️ " + activeWriter + " is writing — exclusive access";
+        monitorStatus.textContent =
+            activeWriter + " has permission. Other users must wait.";
+    } else if (activeReaders > 0) {
+        resource.className = "resource reading";
+        resource.textContent =
+            "📖 Readers are reading — " + activeReaders + " active";
+        monitorStatus.textContent =
+            activeReaders + " reader(s) have permission to read.";
+    } else {
+        resource.className = "resource";
+        resource.textContent = "🔒 Resource is free";
+        monitorStatus.textContent =
+            "No one is using the resource.";
+    }
+
+    monitor.firstChild.textContent = "🛡️ Monitor: Managing access ";
+
+    document.getElementById("progress").textContent =
+        "Event " + index + " of " + events.length;
+
+    document.getElementById("message").textContent =
+        index === 0
+        ? "Ready! Press Play or Next Event."
+        : events[index - 1].message;
+
+    const log = document.getElementById("log");
+    log.innerHTML = "";
+
+    events.forEach((event, i) => {
+        const item = document.createElement("li");
+        item.textContent =
+            "Event " + (i + 1) + ": " + event.message;
+
+        if (i === index - 1) item.className = "current";
+        log.appendChild(item);
+    });
+
+    if (index > 0) {
+        log.children[index - 1].scrollIntoView({block:"nearest"});
+    }
+}
+
+function nextEvent() {
+    if (index < events.length) {
+        index++;
+        render();
+    }
+
+    if (index >= events.length) {
+        stopPlay();
+    }
+}
+
+document.getElementById("play").addEventListener("click", () => {
+    if (timer !== null || index >= events.length) return;
+
+    nextEvent();
+
+    if (index < events.length) {
+        timer = setInterval(nextEvent, 1800);
+    }
+});
+
+document.getElementById("pause").addEventListener("click", stopPlay);
+
+document.getElementById("next").addEventListener("click", () => {
+    stopPlay();
+    nextEvent();
+});
+
+document.getElementById("reset").addEventListener("click", () => {
+    stopPlay();
+    index = 0;
+    render();
+});
+
+render();
+</script>
+</body>
+</html>
